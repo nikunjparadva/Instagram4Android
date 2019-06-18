@@ -6,6 +6,8 @@ package dev.niekirk.com.instagram4android;
 
 public class InstagramConstants {
 
+    public static final String ASD = "ASD";
+    
     public static final String API_URL = "https://i.instagram.com/api/v1/";
 
     public static final String API_KEY = "4f8732eb9ba7d1c8e8897a75d6474d4eb3f5279137431b2aafb71fafe2abe178";

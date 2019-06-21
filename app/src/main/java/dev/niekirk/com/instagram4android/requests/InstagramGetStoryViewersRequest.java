@@ -17,10 +17,15 @@ import dev.niekirk.com.instagram4android.requests.payload.InstagramGetStoryViewe
 public class InstagramGetStoryViewersRequest extends InstagramGetRequest<InstagramGetStoryViewersResult> {
 
     private String storyPk;
+    private String maxId;
 
     @Override
     public String getUrl(){
-        return "media/" + storyPk + "/list_reel_media_viewer/";
+        String url = "media/" + storyPk + "/list_reel_media_viewer/";
+        if (maxId != null && !maxId.isEmpty()) {
+            url += "&max_id=" + maxId;
+        }
+        return url;
     }
 
     @Override

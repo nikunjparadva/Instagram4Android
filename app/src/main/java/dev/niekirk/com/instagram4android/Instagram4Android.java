@@ -2,7 +2,6 @@ package dev.niekirk.com.instagram4android;
 
 import java.io.IOException;
 import java.io.Serializable;
-import java.net.CookieManager;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -28,7 +27,6 @@ import dev.niekirk.com.instagram4android.requests.payload.InstagramLoginTwoFacto
 import dev.niekirk.com.instagram4android.requests.payload.InstagramSyncFeaturesPayload;
 import dev.niekirk.com.instagram4android.util.InstagramGenericUtil;
 import dev.niekirk.com.instagram4android.util.InstagramHashUtil;
-
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
@@ -82,22 +80,17 @@ public class Instagram4Android implements Serializable {
     @Getter @Setter
     protected boolean debug;
 
-    @Getter
-    protected HashMap<String, Cookie> cookieStore = new HashMap<>();
+    /*@Getter
+    protected HashMap<String, Cookie> cookieStore = new HashMap<>();*/
 
     @Getter
     protected OkHttpClient client;
-
-    protected HttpUrl igUrl = new HttpUrl.Builder()
-            .scheme("https")
-            .host("i.instagram.com")
-            .build();
 
     protected String identifier;
     protected String verificationCode;
     protected String challengeUrl;
 
-    /*private final HashMap<String, Cookie> cookieStore = new HashMap<>();*/
+    private final HashMap<String, Cookie> cookieStore = new HashMap<>();
 
     /**
      * @param username Username
@@ -110,13 +103,13 @@ public class Instagram4Android implements Serializable {
     }
 
     @Builder
-    public Instagram4Android(String username, String password, long userId, String uuid, HashMap<String, Cookie> cookieStore, OkHostnameVerifier proxy, Credentials credentialsProvider) {
+    public Instagram4Android(String username, String password, long userId, String uuid, /*HashMap<String, Cookie> cookieStore,*/ OkHostnameVerifier proxy, Credentials credentialsProvider) {
         super();
         this.username = username;
         this.password = password;
         this.userId = userId;
         this.uuid = uuid;
-        this.cookieStore = cookieStore;
+        //this.cookieStore = cookieStore;
         this.proxy = proxy;
         this.credentialsProvider = credentialsProvider;
         this.isLoggedIn = true;
@@ -143,25 +136,13 @@ public class Instagram4Android implements Serializable {
         }
 
         /*if (this.cookieStore == null) {
-            cookieStore.put(null, null);
+            this.cookieStore = new CookieJar();
         }*/
 
         client = new OkHttpClient.Builder()
                 .cookieJar(new CookieJar() {
 
-                    private final HashMap<HttpUrl, List<Cookie>> cookieStore = new HashMap<>();
-
                     @Override
-                    public void saveFromResponse(HttpUrl url, List<Cookie> cookies) {
-                        cookieStore.put(url, cookies);
-                    }
-
-                    @Override
-                    public List<Cookie> loadForRequest(HttpUrl url) {
-                        List<Cookie> cookies = cookieStore.get(url);
-                        return cookies != null ? cookies : new ArrayList<Cookie>();
-                    }
-                    /*@Override
                     public void saveFromResponse(HttpUrl url, List<Cookie> cookies) {
                         if (cookies != null) {
                             for (Cookie cookie : cookies) {
@@ -180,7 +161,7 @@ public class Instagram4Android implements Serializable {
                             }
                         }
                         return validCookies;
-                    }*/
+                    }
                 })
                 .build();
 
@@ -202,14 +183,14 @@ public class Instagram4Android implements Serializable {
 
         InstagramLoginResult loginResult = this.sendRequest(new InstagramFbLoginRequest(loginRequest));
         if (loginResult.getStatus().equalsIgnoreCase("ok")) {
-            //System.out.println(cookieStore.toString());
+            System.out.println(cookieStore.toString());
             this.userId = loginResult.getLogged_in_user().getPk();
             this.rankToken = this.userId + "_" + this.uuid;
             this.isLoggedIn = true;
 
             InstagramSyncFeaturesPayload syncFeatures = InstagramSyncFeaturesPayload.builder()
                     ._uuid(uuid)
-                    ._csrftoken(getOrFetchCsrf(igUrl))
+                    ._csrftoken(getOrFetchCsrf(null))
                     ._uid(userId)
                     .id(userId)
                     .experiments(InstagramConstants.DEVICE_EXPERIMENTS)
@@ -222,7 +203,7 @@ public class Instagram4Android implements Serializable {
             this.sendRequest(new InstagramGetRecentActivityRequest());
         }
 
-        //System.out.println("Hello! --> " + loginResult.toString());
+        System.out.println("Hello! --> " + loginResult.toString());
 
         return loginResult;
 
@@ -243,7 +224,7 @@ public class Instagram4Android implements Serializable {
                 .device_id(deviceId)
                 .phone_id(InstagramGenericUtil.generateUuid(true))
                 .login_attempt_account(0)
-                ._csrftoken(getOrFetchCsrf(igUrl))
+                ._csrftoken(getOrFetchCsrf(null))
                 .build();
 
         InstagramLoginResult loginResult = this.sendRequest(new InstagramLoginRequest(loginRequest));
@@ -253,7 +234,7 @@ public class Instagram4Android implements Serializable {
             identifier = loginResult.getTwo_factor_info().getTwo_factor_identifier();
         } else if (loginResult.getChallenge() != null) {
             // logic for challenge
-            //System.out.println("Challenge required: " + loginResult.getChallenge());
+            System.out.println("Challenge required: " + loginResult.getChallenge());
         }
 
         return loginResult;
@@ -271,7 +252,7 @@ public class Instagram4Android implements Serializable {
                 .device_id(deviceId)
                 .phone_id(InstagramGenericUtil.generateUuid(true))
                 .login_attempt_account(0)
-                ._csrftoken(getOrFetchCsrf(igUrl))
+                ._csrftoken(getOrFetchCsrf(null))
                 .build();
         InstagramLoginTwoFactorRequest req = new InstagramLoginTwoFactorRequest(loginRequest);
         InstagramLoginResult loginResult = this.sendRequest(req);
@@ -295,7 +276,7 @@ public class Instagram4Android implements Serializable {
 
         for(Cookie cookie: client.cookieJar().loadForRequest(url)) {
 
-           System.out.println("Name: " + cookie.name());
+//            Log.d("GETCOOKIE", "Name: " + cookie.name());
             if(cookie.name().equalsIgnoreCase("csrftoken")) {
                 return cookie;
             }

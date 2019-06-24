@@ -82,8 +82,8 @@ public class Instagram4Android implements Serializable {
     @Getter @Setter
     protected boolean debug;
 
-    /*@Getter
-    protected HashMap<String, Cookie> cookieStore = new HashMap<>();*/
+    @Getter
+    protected HashMap<String, Cookie> cookieStore = new HashMap<>();
 
     @Getter
     protected OkHttpClient client;
@@ -92,7 +92,7 @@ public class Instagram4Android implements Serializable {
     protected String verificationCode;
     protected String challengeUrl;
 
-    private final HashMap<String, Cookie> cookieStore = new HashMap<>();
+    /*private final HashMap<String, Cookie> cookieStore = new HashMap<>();*/
 
     /**
      * @param username Username
@@ -105,13 +105,13 @@ public class Instagram4Android implements Serializable {
     }
 
     @Builder
-    public Instagram4Android(String username, String password, long userId, String uuid, /*HashMap<String, Cookie> cookieStore,*/ OkHostnameVerifier proxy, Credentials credentialsProvider) {
+    public Instagram4Android(String username, String password, long userId, String uuid, HashMap<String, Cookie> cookieStore, OkHostnameVerifier proxy, Credentials credentialsProvider) {
         super();
         this.username = username;
         this.password = password;
         this.userId = userId;
         this.uuid = uuid;
-        //this.cookieStore = cookieStore;
+        this.cookieStore = cookieStore;
         this.proxy = proxy;
         this.credentialsProvider = credentialsProvider;
         this.isLoggedIn = true;
@@ -185,7 +185,7 @@ public class Instagram4Android implements Serializable {
 
         InstagramLoginResult loginResult = this.sendRequest(new InstagramFbLoginRequest(loginRequest));
         if (loginResult.getStatus().equalsIgnoreCase("ok")) {
-            System.out.println(cookieStore.toString());
+            //System.out.println(cookieStore.toString());
             this.userId = loginResult.getLogged_in_user().getPk();
             this.rankToken = this.userId + "_" + this.uuid;
             this.isLoggedIn = true;
@@ -205,7 +205,7 @@ public class Instagram4Android implements Serializable {
             this.sendRequest(new InstagramGetRecentActivityRequest());
         }
 
-        System.out.println("Hello! --> " + loginResult.toString());
+        //System.out.println("Hello! --> " + loginResult.toString());
 
         return loginResult;
 
@@ -236,7 +236,7 @@ public class Instagram4Android implements Serializable {
             identifier = loginResult.getTwo_factor_info().getTwo_factor_identifier();
         } else if (loginResult.getChallenge() != null) {
             // logic for challenge
-            System.out.println("Challenge required: " + loginResult.getChallenge());
+            //System.out.println("Challenge required: " + loginResult.getChallenge());
         }
 
         return loginResult;

@@ -43,7 +43,7 @@ public class InstagramTimelineFeedRequest extends InstagramRequest<InstagramTime
 
     @Override
     public InstagramTimelineFeedResult execute() throws IOException {
-        System.out.println("EXEC CALLED");
+        //System.out.println("EXEC CALLED");
         Request request = createRequest(createRequestBody());
 
 
@@ -122,7 +122,7 @@ public class InstagramTimelineFeedRequest extends InstagramRequest<InstagramTime
                         .build();
             }
         } else {
-            System.out.println("INIT");
+            //System.out.println("INIT");
             return new FormBody.Builder()
                     .add("_uuid", api.getUuid())
                     .add("_csrftoken", api.getOrFetchCsrf(null))

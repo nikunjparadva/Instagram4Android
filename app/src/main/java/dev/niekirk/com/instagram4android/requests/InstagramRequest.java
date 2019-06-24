@@ -94,8 +94,6 @@ public abstract class InstagramRequest<T> {
                 return (U) result;
             }
         }
-        System.out.println(str);
-        System.out.println(parseJson(str, clazz));
         return parseJson(str, clazz);
     }
 

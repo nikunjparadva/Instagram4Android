@@ -127,11 +127,11 @@ public class Instagram4Android implements Serializable {
 
         this.deviceId = InstagramHashUtil.generateDeviceId(this.username, this.password);
 
-        if (this.uuid.isEmpty()) {
+        if (this.uuid == null || this.uuid.isEmpty()) {
             this.uuid = InstagramGenericUtil.generateUuid(true);
         }
 
-        if (this.advertisingId.isEmpty()) {
+        if (this.advertisingId == null ||this.advertisingId.isEmpty()) {
             this.advertisingId = InstagramGenericUtil.generateUuid(true);
         }
 

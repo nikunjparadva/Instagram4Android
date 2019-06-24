@@ -138,13 +138,25 @@ public class Instagram4Android implements Serializable {
         }
 
         /*if (this.cookieStore == null) {
-            this.cookieStore = new CookieJar();
+            cookieStore.put(null, null);
         }*/
 
         client = new OkHttpClient.Builder()
                 .cookieJar(new CookieJar() {
 
+                    private final HashMap<HttpUrl, List<Cookie>> cookieStore = new HashMap<>();
+
                     @Override
+                    public void saveFromResponse(HttpUrl url, List<Cookie> cookies) {
+                        cookieStore.put(url, cookies);
+                    }
+
+                    @Override
+                    public List<Cookie> loadForRequest(HttpUrl url) {
+                        List<Cookie> cookies = cookieStore.get(url);
+                        return cookies != null ? cookies : new ArrayList<Cookie>();
+                    }
+                    /*@Override
                     public void saveFromResponse(HttpUrl url, List<Cookie> cookies) {
                         if (cookies != null) {
                             for (Cookie cookie : cookies) {
@@ -163,7 +175,7 @@ public class Instagram4Android implements Serializable {
                             }
                         }
                         return validCookies;
-                    }
+                    }*/
                 })
                 .build();
 

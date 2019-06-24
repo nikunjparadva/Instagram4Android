@@ -82,8 +82,8 @@ public class Instagram4Android implements Serializable {
     @Getter @Setter
     protected boolean debug;
 
-    @Getter
-    protected HashMap<String, Cookie> cookieStore = new HashMap<>();
+    /*@Getter
+    protected HashMap<String, Cookie> cookieStore = new HashMap<>();*/
 
     @Getter
     protected OkHttpClient client;
@@ -91,6 +91,8 @@ public class Instagram4Android implements Serializable {
     protected String identifier;
     protected String verificationCode;
     protected String challengeUrl;
+
+    private final HashMap<String, Cookie> cookieStore = new HashMap<>();
 
     /**
      * @param username Username
@@ -103,13 +105,13 @@ public class Instagram4Android implements Serializable {
     }
 
     @Builder
-    public Instagram4Android(String username, String password, long userId, String uuid, HashMap<String, Cookie> cookieStore, OkHostnameVerifier proxy, Credentials credentialsProvider) {
+    public Instagram4Android(String username, String password, long userId, String uuid, /*HashMap<String, Cookie> cookieStore,*/ OkHostnameVerifier proxy, Credentials credentialsProvider) {
         super();
         this.username = username;
         this.password = password;
         this.userId = userId;
         this.uuid = uuid;
-        this.cookieStore = cookieStore;
+        //this.cookieStore = cookieStore;
         this.proxy = proxy;
         this.credentialsProvider = credentialsProvider;
         this.isLoggedIn = true;
@@ -154,12 +156,10 @@ public class Instagram4Android implements Serializable {
                     @Override
                     public List<Cookie> loadForRequest(HttpUrl url) {
                         List<Cookie> validCookies = new ArrayList<>();
-                        if(cookieStore != null && url != null) {
-                            for (Map.Entry<String, Cookie> entry : cookieStore.entrySet()) {
-                                Cookie cookie = entry.getValue();
-                                if (cookie.expiresAt() >= System.currentTimeMillis()) {
-                                    validCookies.add(cookie);
-                                }
+                        for (Map.Entry<String, Cookie> entry : cookieStore.entrySet()) {
+                            Cookie cookie = entry.getValue();
+                            if(cookie.expiresAt() >= System.currentTimeMillis()) {
+                                validCookies.add(cookie);
                             }
                         }
                         return validCookies;
@@ -263,27 +263,26 @@ public class Instagram4Android implements Serializable {
     }
 
     public String getOrFetchCsrf(HttpUrl url) throws IOException {
-        if(url != null) {
-            Cookie cookie = getCsrfCookie(url);
-            if (cookie == null) {
-                sendRequest(new InstagramFetchHeadersRequest());
-                cookie = getCsrfCookie(url);
-            }
-            return cookie.value();
+
+        Cookie cookie = getCsrfCookie(url);
+        if(cookie == null) {
+            sendRequest(new InstagramFetchHeadersRequest());
+            cookie = getCsrfCookie(url);
         }
-        return null;
+
+        return cookie.value();
+
     }
 
     public Cookie getCsrfCookie(HttpUrl url) {
-        if(url != null) {
-            for (Cookie cookie : client.cookieJar().loadForRequest(url)) {
+
+        for(Cookie cookie: client.cookieJar().loadForRequest(url)) {
 
 //            Log.d("GETCOOKIE", "Name: " + cookie.name());
-                if (cookie.name().equalsIgnoreCase("csrftoken")) {
-                    return cookie;
-                }
-
+            if(cookie.name().equalsIgnoreCase("csrftoken")) {
+                return cookie;
             }
+
         }
 
         return null;

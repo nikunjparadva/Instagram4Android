@@ -154,10 +154,12 @@ public class Instagram4Android implements Serializable {
                     @Override
                     public List<Cookie> loadForRequest(HttpUrl url) {
                         List<Cookie> validCookies = new ArrayList<>();
-                        for (Map.Entry<String, Cookie> entry : cookieStore.entrySet()) {
-                            Cookie cookie = entry.getValue();
-                            if(cookie.expiresAt() >= System.currentTimeMillis()) {
-                                validCookies.add(cookie);
+                        if(cookieStore != null && url != null) {
+                            for (Map.Entry<String, Cookie> entry : cookieStore.entrySet()) {
+                                Cookie cookie = entry.getValue();
+                                if (cookie.expiresAt() >= System.currentTimeMillis()) {
+                                    validCookies.add(cookie);
+                                }
                             }
                         }
                         return validCookies;
@@ -261,25 +263,27 @@ public class Instagram4Android implements Serializable {
     }
 
     public String getOrFetchCsrf(HttpUrl url) throws IOException {
-
-        Cookie cookie = getCsrfCookie(url);
-        if(cookie == null) {
-            sendRequest(new InstagramFetchHeadersRequest());
-            cookie = getCsrfCookie(url);
+        if(url != null) {
+            Cookie cookie = getCsrfCookie(url);
+            if (cookie == null) {
+                sendRequest(new InstagramFetchHeadersRequest());
+                cookie = getCsrfCookie(url);
+            }
+            return cookie.value();
         }
-
-        return cookie.value();
+        return null;
     }
 
     public Cookie getCsrfCookie(HttpUrl url) {
-
-        for(Cookie cookie: client.cookieJar().loadForRequest(url)) {
+        if(url != null) {
+            for (Cookie cookie : client.cookieJar().loadForRequest(url)) {
 
 //            Log.d("GETCOOKIE", "Name: " + cookie.name());
-            if(cookie.name().equalsIgnoreCase("csrftoken")) {
-                return cookie;
-            }
+                if (cookie.name().equalsIgnoreCase("csrftoken")) {
+                    return cookie;
+                }
 
+            }
         }
 
         return null;

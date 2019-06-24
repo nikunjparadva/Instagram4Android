@@ -88,6 +88,11 @@ public class Instagram4Android implements Serializable {
     @Getter
     protected OkHttpClient client;
 
+    protected HttpUrl igUrl = new HttpUrl.Builder()
+            .scheme("https")
+            .host("i.instagram.com")
+            .build();
+
     protected String identifier;
     protected String verificationCode;
     protected String challengeUrl;
@@ -204,7 +209,7 @@ public class Instagram4Android implements Serializable {
 
             InstagramSyncFeaturesPayload syncFeatures = InstagramSyncFeaturesPayload.builder()
                     ._uuid(uuid)
-                    ._csrftoken(getOrFetchCsrf(null))
+                    ._csrftoken(getOrFetchCsrf(igUrl))
                     ._uid(userId)
                     .id(userId)
                     .experiments(InstagramConstants.DEVICE_EXPERIMENTS)
@@ -238,7 +243,7 @@ public class Instagram4Android implements Serializable {
                 .device_id(deviceId)
                 .phone_id(InstagramGenericUtil.generateUuid(true))
                 .login_attempt_account(0)
-                ._csrftoken(getOrFetchCsrf(null))
+                ._csrftoken(getOrFetchCsrf(igUrl))
                 .build();
 
         InstagramLoginResult loginResult = this.sendRequest(new InstagramLoginRequest(loginRequest));
@@ -266,7 +271,7 @@ public class Instagram4Android implements Serializable {
                 .device_id(deviceId)
                 .phone_id(InstagramGenericUtil.generateUuid(true))
                 .login_attempt_account(0)
-                ._csrftoken(getOrFetchCsrf(null))
+                ._csrftoken(getOrFetchCsrf(igUrl))
                 .build();
         InstagramLoginTwoFactorRequest req = new InstagramLoginTwoFactorRequest(loginRequest);
         InstagramLoginResult loginResult = this.sendRequest(req);
@@ -290,7 +295,7 @@ public class Instagram4Android implements Serializable {
 
         for(Cookie cookie: client.cookieJar().loadForRequest(url)) {
 
-//            Log.d("GETCOOKIE", "Name: " + cookie.name());
+           System.out.println("Name: " + cookie.name());
             if(cookie.name().equalsIgnoreCase("csrftoken")) {
                 return cookie;
             }

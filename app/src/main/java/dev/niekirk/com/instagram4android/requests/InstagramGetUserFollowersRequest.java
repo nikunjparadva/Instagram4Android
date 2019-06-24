@@ -15,7 +15,7 @@ import lombok.SneakyThrows;
 @AllArgsConstructor
 public class InstagramGetUserFollowersRequest extends InstagramGetRequest<InstagramGetUserFollowersResult> {
 
-    @NonNull
+    //@NonNull
     private long userId;
     private String maxId;
 

@@ -6,21 +6,24 @@ import lombok.Setter;
 import lombok.ToString;
 
 /**
- * Created by root on 08/06/17.
+ * Login Payload
+ * @author Ozan Karaali
+ *
  */
-
 @Getter
 @Setter
 @ToString(callSuper = true)
 @Builder
-public class InstagramLoginPayload {
+public class InstagramLoginTwoFactorPayload {
     private String username;
     private String phone_id;
     private String _csrftoken;
     private String guid;
     private String device_id;
+    private String verification_code;
+    private String two_factor_identifier;
     private String password;
-    private int login_attempt_account;
+    private int login_attempt_account = 0;
 
 
 }

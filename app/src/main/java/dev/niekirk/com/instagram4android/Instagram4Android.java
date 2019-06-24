@@ -1,98 +1,143 @@
 package dev.niekirk.com.instagram4android;
 
-import android.text.TextUtils;
-import android.util.Log;
+import java.io.IOException;
+import java.io.Serializable;
+import java.net.CookieManager;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import dev.niekirk.com.instagram4android.requests.InstagramAutoCompleteUserListRequest;
 import dev.niekirk.com.instagram4android.requests.InstagramFbLoginRequest;
 import dev.niekirk.com.instagram4android.requests.InstagramGetInboxRequest;
 import dev.niekirk.com.instagram4android.requests.InstagramGetRecentActivityRequest;
 import dev.niekirk.com.instagram4android.requests.InstagramLoginRequest;
+import dev.niekirk.com.instagram4android.requests.InstagramLoginTwoFactorRequest;
 import dev.niekirk.com.instagram4android.requests.InstagramRequest;
 import dev.niekirk.com.instagram4android.requests.InstagramSyncFeaturesRequest;
 import dev.niekirk.com.instagram4android.requests.InstagramTimelineFeedRequest;
 import dev.niekirk.com.instagram4android.requests.internal.InstagramFetchHeadersRequest;
+import dev.niekirk.com.instagram4android.requests.internal.InstagramLogAttributionRequest;
+import dev.niekirk.com.instagram4android.requests.internal.InstagramReadMsisdnHeaderRequest;
+import dev.niekirk.com.instagram4android.requests.internal.InstagramZeroRatingTokenRequest;
 import dev.niekirk.com.instagram4android.requests.payload.InstagramFbLoginPayload;
 import dev.niekirk.com.instagram4android.requests.payload.InstagramLoginPayload;
 import dev.niekirk.com.instagram4android.requests.payload.InstagramLoginResult;
+import dev.niekirk.com.instagram4android.requests.payload.InstagramLoginTwoFactorPayload;
 import dev.niekirk.com.instagram4android.requests.payload.InstagramSyncFeaturesPayload;
 import dev.niekirk.com.instagram4android.util.InstagramGenericUtil;
 import dev.niekirk.com.instagram4android.util.InstagramHashUtil;
-
-import java.io.IOException;
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 import okhttp3.Cookie;
 import okhttp3.CookieJar;
+import okhttp3.Credentials;
 import okhttp3.HttpUrl;
 import okhttp3.OkHttpClient;
 import okhttp3.Response;
+import okhttp3.internal.tls.OkHostnameVerifier;
 
 /**
  * Created by root on 08/06/17.
  */
 
-public class Instagram4Android {
+public class Instagram4Android implements Serializable {
 
     @Getter
     protected String deviceId;
 
-    @Getter @Setter
-    private String username;
-
-    @Getter @Setter
-    private String password;
-
-    @Getter @Setter
-    private String accessToken;
+    @Getter
+    protected String uuid;
 
     @Getter
-    protected boolean isLoggedIn;
+    protected String advertisingId;
+
+    @Getter @Setter
+    protected String username;
+
+    @Getter @Setter
+    protected String password;
 
     @Getter
-    private String uuid;
+    protected Credentials credentialsProvider;
+
+    @Getter @Setter
+    protected OkHostnameVerifier proxy;
+
+    @Getter @Setter
+    protected long userId;
 
     @Getter @Setter
     protected String rankToken;
 
-    @Getter @Setter
-    private long userId;
+    @Getter
+    protected boolean isLoggedIn;
 
     @Getter @Setter
     protected Response lastResponse;
 
+    @Getter @Setter
+    protected boolean debug;
+
+    @Getter
+    protected HashMap<String, Cookie> cookieStore = new HashMap<>();
+
     @Getter
     protected OkHttpClient client;
 
-    private final HashMap<String, Cookie> cookieStore = new HashMap<>();
+    protected String identifier;
+    protected String verificationCode;
+    protected String challengeUrl;
 
-    @Builder
+    /**
+     * @param username Username
+     * @param password Password
+     */
     public Instagram4Android(String username, String password) {
         super();
         this.username = username;
         this.password = password;
     }
 
+    @Builder
+    public Instagram4Android(String username, String password, long userId, String uuid, HashMap<String, Cookie> cookieStore, OkHostnameVerifier proxy, Credentials credentialsProvider) {
+        super();
+        this.username = username;
+        this.password = password;
+        this.userId = userId;
+        this.uuid = uuid;
+        this.cookieStore = cookieStore;
+        this.proxy = proxy;
+        this.credentialsProvider = credentialsProvider;
+        this.isLoggedIn = true;
+    }
+
     public void setup() {
 
-        /*
-        if (this.username.length() < 1) {
+        if (this.username.isEmpty()) {
             throw new IllegalArgumentException("Username is mandatory.");
         }
 
-        if (this.password.length() < 1) {
+        if (this.password.isEmpty()) {
             throw new IllegalArgumentException("Password is mandatory.");
-        }*/
+        }
 
         this.deviceId = InstagramHashUtil.generateDeviceId(this.username, this.password);
-        this.uuid = InstagramGenericUtil.generateUuid(true);
+
+        if (this.uuid.isEmpty()) {
+            this.uuid = InstagramGenericUtil.generateUuid(true);
+        }
+
+        if (this.advertisingId.isEmpty()) {
+            this.advertisingId = InstagramGenericUtil.generateUuid(true);
+        }
+
+        /*if (this.cookieStore == null) {
+            this.cookieStore = new CookieJar();
+        }*/
 
         client = new OkHttpClient.Builder()
                 .cookieJar(new CookieJar() {
@@ -122,7 +167,7 @@ public class Instagram4Android {
 
     }
 
-    public InstagramLoginResult loginFb() throws IOException {
+    public InstagramLoginResult loginFb() throws IOException { // NOT UPDATED
 
         InstagramFbLoginPayload loginRequest = InstagramFbLoginPayload.builder()
                 .dryrun(true)
@@ -151,7 +196,7 @@ public class Instagram4Android {
                     .experiments(InstagramConstants.DEVICE_EXPERIMENTS)
                     .build();
 
-            this.sendRequest(new InstagramSyncFeaturesRequest(syncFeatures));
+            this.sendRequest(new InstagramSyncFeaturesRequest(true));
             this.sendRequest(new InstagramAutoCompleteUserListRequest());
             //this.sendRequest(new InstagramTimelineFeedRequest());
             this.sendRequest(new InstagramGetInboxRequest());
@@ -168,6 +213,11 @@ public class Instagram4Android {
 
         //Log.d("LOGIN", "Logging with user " + username + " and password " + password.replaceAll("[a-zA-Z0-9]", "*"));
 
+        this.sendRequest(new InstagramReadMsisdnHeaderRequest());
+        this.sendRequest(new InstagramSyncFeaturesRequest(true));
+        this.sendRequest(new InstagramZeroRatingTokenRequest());
+        this.sendRequest(new InstagramLogAttributionRequest());
+
         InstagramLoginPayload loginRequest = InstagramLoginPayload.builder().username(username)
                 .password(password)
                 .guid(uuid)
@@ -178,30 +228,37 @@ public class Instagram4Android {
                 .build();
 
         InstagramLoginResult loginResult = this.sendRequest(new InstagramLoginRequest(loginRequest));
-        if (loginResult.getStatus().equalsIgnoreCase("ok")) {
-            this.userId = loginResult.getLogged_in_user().getPk();
-            this.rankToken = this.userId + "_" + this.uuid;
-            this.isLoggedIn = true;
+        emulateUserLoggedIn(loginResult);
 
-            InstagramSyncFeaturesPayload syncFeatures = InstagramSyncFeaturesPayload.builder()
-                    ._uuid(uuid)
-                    ._csrftoken(getOrFetchCsrf(null))
-                    ._uid(userId)
-                    .id(userId)
-                    .experiments(InstagramConstants.DEVICE_EXPERIMENTS)
-                    .build();
-
-            this.sendRequest(new InstagramSyncFeaturesRequest(syncFeatures));
-            this.sendRequest(new InstagramAutoCompleteUserListRequest());
-            //this.sendRequest(new InstagramTimelineFeedRequest());
-            this.sendRequest(new InstagramGetInboxRequest());
-            this.sendRequest(new InstagramGetRecentActivityRequest());
+        if (loginResult.getTwo_factor_info() != null) {
+            identifier = loginResult.getTwo_factor_info().getTwo_factor_identifier();
+        } else if (loginResult.getChallenge() != null) {
+            // logic for challenge
+            System.out.println("Challenge required: " + loginResult.getChallenge());
         }
-
 
         return loginResult;
     }
 
+    public InstagramLoginResult login(String verificationCode) throws IOException {
+        if (identifier == null) {
+            login();
+        }
+        InstagramLoginTwoFactorPayload loginRequest = InstagramLoginTwoFactorPayload.builder().username(username)
+                .verification_code(verificationCode)
+                .two_factor_identifier(identifier)
+                .password(password)
+                .guid(uuid)
+                .device_id(deviceId)
+                .phone_id(InstagramGenericUtil.generateUuid(true))
+                .login_attempt_account(0)
+                ._csrftoken(getOrFetchCsrf(null))
+                .build();
+        InstagramLoginTwoFactorRequest req = new InstagramLoginTwoFactorRequest(loginRequest);
+        InstagramLoginResult loginResult = this.sendRequest(req);
+        emulateUserLoggedIn(loginResult);
+        return loginResult;
+    }
 
     public String getOrFetchCsrf(HttpUrl url) throws IOException {
 
@@ -212,7 +269,6 @@ public class Instagram4Android {
         }
 
         return cookie.value();
-
     }
 
     public Cookie getCsrfCookie(HttpUrl url) {
@@ -242,5 +298,17 @@ public class Instagram4Android {
 
         return response;
     }
+    private void emulateUserLoggedIn(InstagramLoginResult loginResult) throws IOException {
+        if (loginResult.getStatus().equalsIgnoreCase("ok")) {
+            this.userId = loginResult.getLogged_in_user().getPk();
+            this.rankToken = this.userId + "_" + this.uuid;
+            this.isLoggedIn = true;
 
+            this.sendRequest(new InstagramSyncFeaturesRequest(false));
+            this.sendRequest(new InstagramAutoCompleteUserListRequest());
+            this.sendRequest(new InstagramTimelineFeedRequest());
+            this.sendRequest(new InstagramGetInboxRequest());
+            this.sendRequest(new InstagramGetRecentActivityRequest());
+        }
+    }
 }

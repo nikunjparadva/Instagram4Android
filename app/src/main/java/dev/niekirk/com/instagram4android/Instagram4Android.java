@@ -147,7 +147,6 @@ public class Instagram4Android implements Serializable {
                         if (cookies != null) {
                             for (Cookie cookie : cookies) {
                                 cookieStore.put(cookie.name(), cookie);
-                                System.out.println("COOKIE NAME AND DOMAIN (LOAD): " + cookie.name() + cookie.domain());
                             }
                         }
                     }
@@ -158,12 +157,10 @@ public class Instagram4Android implements Serializable {
                         for (Map.Entry<String, Cookie> entry : cookieStore.entrySet()) {
                             Cookie cookie = entry.getValue();
                             if(cookie.expiresAt() >= System.currentTimeMillis()) {
-                                System.out.println("COOKIE NAME " + cookie.name() +
-                                        "AND DOMAIN (LOAD):" + cookie.domain() +
-                                        "AND VALUE" + cookie.value());
                                 validCookies.add(cookie);
                             }
                         }
+                        System.out.println("VALID COOKIES" + validCookies);
                         return validCookies;
                     }
                 })

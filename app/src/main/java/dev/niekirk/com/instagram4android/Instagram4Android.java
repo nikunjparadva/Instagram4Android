@@ -158,7 +158,9 @@ public class Instagram4Android implements Serializable {
                         for (Map.Entry<String, Cookie> entry : cookieStore.entrySet()) {
                             Cookie cookie = entry.getValue();
                             if(cookie.expiresAt() >= System.currentTimeMillis()) {
-                                System.out.println("COOKIE NAME AND DOMAIN (LOAD): " + cookie.name() + cookie.domain());
+                                System.out.println("COOKIE NAME " + cookie.name() +
+                                        "AND DOMAIN (LOAD):" + cookie.domain() +
+                                        "AND VALUE" + cookie.value());
                                 validCookies.add(cookie);
                             }
                         }

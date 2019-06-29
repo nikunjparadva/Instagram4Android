@@ -80,8 +80,8 @@ public class Instagram4Android implements Serializable {
     @Getter @Setter
     protected boolean debug;
 
-    /*@Getter
-    protected HashMap<String, Cookie> cookieStore = new HashMap<>();*/
+    @Getter
+    protected CookieJar jarCookie;
 
     @Getter
     protected OkHttpClient client;
@@ -103,13 +103,13 @@ public class Instagram4Android implements Serializable {
     }
 
     @Builder
-    public Instagram4Android(String username, String password, long userId, String uuid, /*HashMap<String, Cookie> cookieStore,*/ OkHostnameVerifier proxy, Credentials credentialsProvider) {
+    public Instagram4Android(String username, String password, long userId, String uuid, CookieJar jarCookie, OkHostnameVerifier proxy, Credentials credentialsProvider) {
         super();
         this.username = username;
         this.password = password;
         this.userId = userId;
         this.uuid = uuid;
-        //this.cookieStore = cookieStore;
+        this.jarCookie = jarCookie;
         this.proxy = proxy;
         this.credentialsProvider = credentialsProvider;
         this.isLoggedIn = true;
@@ -135,36 +135,38 @@ public class Instagram4Android implements Serializable {
             this.advertisingId = InstagramGenericUtil.generateUuid(true);
         }
 
-        /*if (this.cookieStore == null) {
-            this.cookieStore = new CookieJar();
-        }*/
-
-        client = new OkHttpClient.Builder()
-                .cookieJar(new CookieJar() {
-
-                    @Override
-                    public void saveFromResponse(HttpUrl url, List<Cookie> cookies) {
-                        if (cookies != null) {
-                            for (Cookie cookie : cookies) {
-                                cookieStore.put(cookie.name(), cookie);
+        if (this.jarCookie == null) {
+            client = new OkHttpClient.Builder()
+                    .cookieJar(this.jarCookie = new CookieJar() {
+                        @Override
+                        public void saveFromResponse(HttpUrl url, List<Cookie> cookies) {
+                            if (cookies != null) {
+                                for (Cookie cookie : cookies) {
+                                    cookieStore.put(cookie.name(), cookie);
+                                }
                             }
                         }
-                    }
 
-                    @Override
-                    public List<Cookie> loadForRequest(HttpUrl url) {
-                        List<Cookie> validCookies = new ArrayList<>();
-                        for (Map.Entry<String, Cookie> entry : cookieStore.entrySet()) {
-                            Cookie cookie = entry.getValue();
-                            if(cookie.expiresAt() >= System.currentTimeMillis()) {
-                                validCookies.add(cookie);
+                        @Override
+                        public List<Cookie> loadForRequest(HttpUrl url) {
+                            List<Cookie> validCookies = new ArrayList<>();
+                            for (Map.Entry<String, Cookie> entry : cookieStore.entrySet()) {
+                                Cookie cookie = entry.getValue();
+                                if(cookie.expiresAt() >= System.currentTimeMillis()) {
+                                    validCookies.add(cookie);
+                                }
                             }
+                            return validCookies;
                         }
-                        System.out.println("VALID COOKIES" + validCookies);
-                        return validCookies;
-                    }
-                })
-                .build();
+                    })
+                    .build();
+        }
+        else {
+            client = new OkHttpClient.Builder()
+                    .cookieJar(this.jarCookie)
+                    .build();
+        }
+
 
     }
 
@@ -276,8 +278,6 @@ public class Instagram4Android implements Serializable {
     public Cookie getCsrfCookie(HttpUrl url) {
 
         for(Cookie cookie: client.cookieJar().loadForRequest(url)) {
-
-//            Log.d("GETCOOKIE", "Name: " + cookie.name());
             if(cookie.name().equalsIgnoreCase("csrftoken")) {
                 return cookie;
             }

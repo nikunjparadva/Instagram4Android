@@ -186,7 +186,6 @@ public class Instagram4Android implements Serializable {
 
         InstagramLoginResult loginResult = this.sendRequest(new InstagramFbLoginRequest(loginRequest));
         if (loginResult.getStatus().equalsIgnoreCase("ok")) {
-            System.out.println(cookieStore.toString());
             this.userId = loginResult.getLogged_in_user().getPk();
             this.rankToken = this.userId + "_" + this.uuid;
             this.isLoggedIn = true;

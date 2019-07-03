@@ -6,6 +6,7 @@ import dev.niekirk.com.instagram4android.requests.payload.StatusResult;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
 import okhttp3.HttpUrl;
 
@@ -13,6 +14,8 @@ import okhttp3.HttpUrl;
  * Created by root on 08/06/17.
  */
 
+
+@AllArgsConstructor
 public class InstagramBlockRequest extends InstagramPostRequest<StatusResult> {
 
     private long userId;
